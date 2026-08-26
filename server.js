@@ -3,6 +3,7 @@ const PDFDocument = require('pdfkit');
 const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
+const fs = require('fs');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -10,15 +11,15 @@ app.use(express.json());
 app.use(cors());
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
 
-// Servir archivos estáticos desde la MISMA carpeta (raíz) SIN index automático
+// Servir archivos estáticos desde la raíz, sin index automático
 app.use(express.static(__dirname, { index: false }));
 
-// Ruta principal: FORZAR index.html
+// Ruta principal: forzar index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ========== CONTENIDO COMPLETO DEL LIBRO (TAL CUAL LO PUSISTE) ==========
+// ========== CONTENIDO COMPLETO DEL LIBRO (TUS POEMAS) ==========
 const libroData = [
   {
     pagina: 1,
@@ -337,34 +338,116 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// ========== RUTA PDF – CON PORTADA E IMAGEN ==========
 app.get('/api/descargar-pdf', (req, res) => {
   try {
-    const doc = new PDFDocument({ margin: 50 });
+    const doc = new PDFDocument({
+      margin: 60,
+      size: 'A4',
+      info: {
+        Title: 'Portal Simetría Antitética',
+        Author: 'Amaru Poemarios'
+      }
+    });
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="Portal_Simetria_Antitetica_Amaru.pdf"');
     doc.pipe(res);
 
-    doc.fontSize(22).font('Helvetica-Bold').text('Portal Simetría Antitética', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(14).font('Helvetica').text('Amaru Poemarios', { align: 'center' });
+    // ─── PORTADA CON IMAGEN ────────────────────────────
+    const rutaImagen = path.join(__dirname, 'portada.jpg');
+    if (fs.existsSync(rutaImagen)) {
+      // Imagen centrada
+      const imgWidth = 300;
+      const imgHeight = 400;
+      const x = (doc.page.width - imgWidth) / 2;
+      const y = 80;
+      doc.image(rutaImagen, x, y, { width: imgWidth, height: imgHeight });
+      doc.moveDown(22); // Espacio después de la imagen
+    } else {
+      // Si no hay imagen, un título grande
+      doc.font('Helvetica-Bold')
+         .fontSize(32)
+         .text('Portal Simetría Antitética', { align: 'center' });
+      doc.moveDown(3);
+    }
+
+    // Título y autor (siempre visibles)
+    doc.font('Helvetica-Bold')
+       .fontSize(24)
+       .text('Portal Simetría Antitética', { align: 'center' });
+    doc.moveDown(0.5);
+
+    doc.font('Helvetica')
+       .fontSize(18)
+       .text('Amaru Poemarios', { align: 'center' });
+    doc.moveDown(0.5);
+
+    doc.fontSize(14)
+       .text('Poemario de amor y desamor', { align: 'center' });
     doc.moveDown(2);
 
-    libroData.forEach(pag => {
+    doc.fontSize(12)
+       .text('© 2025 – Todos los derechos reservados', { align: 'center' });
+    doc.moveDown(3);
+
+    // Línea decorativa
+    doc.moveTo(100, doc.y)
+       .lineTo(doc.page.width - 100, doc.y)
+       .stroke('#b8860b');
+    doc.moveDown(2);
+
+    doc.fontSize(11)
+       .text('"Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños."', {
+         align: 'center',
+         italic: true
+       });
+    doc.moveDown(1);
+    doc.text('Entre tantos mensajes en símbolos no hay puntada sin hilo.', { align: 'center' });
+    doc.text('Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.', { align: 'center' });
+
+    // ─── POEMAS (cada uno en página nueva) ────────────────
+    libroData.forEach((pag, index) => {
+      if (index > 0) doc.addPage();
+
       if (pag.titulo) {
-        doc.fontSize(16).font('Helvetica-Bold').text(pag.titulo, { underline: true });
+        doc.font('Helvetica-Bold')
+           .fontSize(20)
+           .text(pag.titulo, { align: 'center' });
         doc.moveDown(0.5);
+        doc.moveTo(120, doc.y)
+           .lineTo(doc.page.width - 120, doc.y)
+           .stroke('#b8860b');
+        doc.moveDown(1);
       }
-      doc.fontSize(12).font('Helvetica').text(pag.contenido, { lineGap: 5 });
-      doc.moveDown(1.5);
+
+      doc.font('Helvetica')
+         .fontSize(12)
+         .text(pag.contenido, {
+           align: 'justify',
+           lineGap: 8,
+           indent: 30,
+           continued: false
+         });
+
+      // Número de página
+      const pageNumber = doc.page.number;
+      doc.fontSize(10)
+         .text(`Página ${pageNumber}`, {
+           align: 'center',
+           lineGap: 0
+         });
     });
 
     doc.end();
+
   } catch (e) {
-    res.status(500).send("Error al generar el PDF");
+    console.error('Error al generar PDF:', e);
+    res.status(500).send('Error al generar el PDF');
   }
 });
 
-// Cualquier otra ruta (para el SPA) sirve index.html
+// Cualquier otra ruta: SPA (sirve index.html)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
