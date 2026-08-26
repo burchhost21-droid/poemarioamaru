@@ -1,440 +1,498 @@
-const express = require('express');
-const PDFDocument = require('pdfkit');
-const path = require('path');
-const cors = require('cors');
-const helmet = require('helmet');
-
-const app = express();
-app.set('trust proxy', 1);
-app.use(express.json());
-app.use(cors());
-app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
-
-// Servir archivos estáticos desde la raíz, pero sin index automático
-app.use(express.static(__dirname, { index: false }));
-
-// Ruta principal: forzar index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// ========== CONTENIDO COMPLETO DEL LIBRO (TAL CUAL LO PUSISTE) ==========
-const libroData = [
-  {
-    pagina: 1,
-    titulo: "DERECHOS RESERVADOS © 2025",
-    contenido: `Esta obra está protegida por la Ley N.º 11.723 de Propiedad Intelectual de la República Argentina.
-
-Todos los derechos de reproducción, distribución, comunicación pública y transformación están reservados al autor.
-
-Está prohibida su reproducción total o parcial por cualquier medio, actual o futuro, sin autorización expresa del autor.
-
-Registrada bajo las normativas argentinas de protección autoral.
-
-Declaración jurada de originalidad: esta obra es creación 100 % original del autor argentino.`
-  },
-  {
-    pagina: 2,
-    titulo: "Santificación boicoteada",
-    contenido: `El eco de los gritos no emitidos tarda mucho más en disiparse,
-
-los jadeos no pronunciados caen en escupitajos amargos,
-
-la violencia se escapa de las pupilas para adquirir sustancia,
-
-estás a un secreto de que tu mueca forzada sea insostenible
-
-y a dos de que sea ingesticulable.
-
-Cuando la muerte es espiritual, la tumba es de hielo negro, transparente pero no translúcido.
-
-Lo sé porque, por mucho que alguien brillara del otro lado, yo seguía igual de entenebrecido.`
-  },
-  {
-    pagina: 3,
-    titulo: "Dicen que la envidia atrae insectos a los sueños",
-    contenido: `Sombras sin nada que las proyecte convergen hasta justificarse,
-
-brota brea de esa herida que se le abre al aire.
-
-Una araña había completado ese atrapasueños, el que ahora hace bailar, burlándose de mis plumas inmóviles.
-
-No me quejo,
-
-tal vez las inspires como a mí estos sueños rebeldes a punto de volverse materiales.`
-  },
-  {
-    pagina: 4,
-    titulo: "Hechizado = amor maldito",
-    contenido: `Me siento liviano, imantado, estoy por irme de mi cuerpo.
-
-Si logro salirme de mi pecho voy a buscarte, para desbordar tus sentidos.
-
-De antítesis a simetría, inevitable resonar, a un paso desde tan lejos.
-
-El objetivo de cada abrazo será superponer los corazones.
-
-Fundite en mí hasta que no haya un movimiento sin sinergia,
-
-ninguna caricia que te dé que no se sienta un poco propia.
-
-Dejame fundirme en vos hasta estar hecho de tus deseos.`
-  },
-  {
-    pagina: 5,
-    titulo: "Hay un puñal de estrellas que siempre apunta al norte",
-    contenido: `¿Tantos ojos en uno sin sumarse panorama?
-
-Vi más en los símbolos de uno solo.
-
-Tenemos las mismas estrellas de norte, pero para mí es una cruz y para ustedes un puñal.
-
-Mi cruz no está invertida; son ustedes empuñando el filo.
-
-Así que no me acuses de lo que causas.
-
-Debe ser romanos 2:1
-
-hipócrita.`
-  },
-  {
-    pagina: 6,
-    titulo: "La geometría sagrada es música encriptada",
-    contenido: `Amo traducirte flores a tablaturas para no tener que cortarlas, y por poder olvidar la teoría musical,
-
-dibujar con melodías, prometer con los ojos, flotar a contracorriente de lo que emanás.
-
-¿Habrás escuchado las promesas que no dije? 
-
-Veo una amenaza en tus ojos tiernos llenos de luz.`
-  },
-  {
-    pagina: 7,
-    titulo: "Tengo tatuada una runa necromancer en el pecho",
-    contenido: `Te dedico las transiciones
-
-de hilo conductor a encaje
-
-Y de grietas a runas sobre los auges colapsados que creí pisos,
-
-en mis pilares derruidos; promesas rotas y de verdades que ya no son
-
-y en mi alma agrietada de aridez.
-
-Por eso llevo tatuado, sobre la somatización de lo que inspiró este libro,
-
-uno de los muchos intentos de sentirme vivo.
-
-Para darte un “yo” con algo más que desolación.`
-  },
-  {
-    pagina: 8,
-    titulo: "Victorias pírricas",
-    contenido: `Progreso por regresiones, introspección en proyecciones.
-
-A veces, lo correcto es poner las piezas en sus casillas iniciales.
-
-Después de ver mi luz retraerse y tu oscuridad propagarse, 
-
-nos veo en una nueva balanza, de nuevo verticalizada, pero esta sí es justa,
-
-en la anterior, desde abajo veía tu trasfondo,
-
-y en la actual desde arriba tu conciencia ardiendo sin iluminar, degradándose.`
-  },
-  {
-    pagina: 9,
-    titulo: "Me dijo un pájarito que nuestro hilo no era rojo antes de que yo esté así de herido",
-    contenido: `Me escucho sollozar a lo lejos
-
-¿Querías sugestionarme o burlarte con el muñeco que tiraste a mi patio?
-
-¿Crees si digo que no me importa? porque...
-
-¿Alguna vez trepaste por los nudos que le hicieron a tu historia?
-
-Ahora, entrelazando historias, se desenreda la trama.
-
-Me parchaste los ojos, pero todo transmutó,
-
-Así que para que no veas mis ojeras negras como tu victoria
-
-sabé que subrayan con brea mis lámparas noctámbulas,
-
-Gracias a las que supe que debía soltar nuestro hilo, para que no sientas frío lejos de mí,
-
-destejida de tu pasión encarnada.
-
-Ahora entiendo tu cinismo, usabas poemarios de amor como grimorios de invocación,
-
-como yo las letras del metal más pesado como versos de amor.
-
-No le pedí a Dios que rompa la maldición, dejé que siga siendo contraproducente
-
-¿No leíste que a sus escogidos todo les favorece?`
-  },
-  {
-    pagina: 10,
-    titulo: "A veces encuentro gualichos en mi patio",
-    contenido: `Anduve sin dormir ni despertar del todo
-
-deseando un alma con lo que me falta, 
-
-alguna voluntad, para volver a ser.
-
-Con mi espíritu sangrando su luz hasta apagarse
-
-al ver que la vida no transcurre a la par del tiempo.
-
-Con una cinta negra abrochada al pecho, la cual no me saqué de mi yo tejido,
-
-hasta que terminar el duelo por quien debía ser
-
-y de todo lo que no viví.
-
-Mi corazón dio un grito por voluntad propia, como si pudiera devolverte el humo impregnado,
-
-o de un gruñido rasparme el pecho por dentro para escupir tu infección corporizada.`
-  },
-  {
-    pagina: 11,
-    titulo: "En el eje de los sucesos ves armonía desde el centro del caos",
-    contenido: `¡Apofenia! ¡Ilusiones estadísticas!
-
-¡Correlaciones espurias!
-
-Da igual, sería estúpido seguir considerando todas estas casualidades como tales.
-
-Si todos tienen la frase siguiente de una sola narrativa ¿qué significa?
-
-No me importa si es magia o si son alucinaciones.
-
-Solo puedo pensar:
-
-¡Qué reconfortante un caos tan intenso después de una tranquilidad prolongada hasta el desespero!`
-  },
-  {
-    pagina: 12,
-    titulo: "Maldiciones brillantes",
-    contenido: `La serpiente tiene la lengua bifurcada como mal augurio de que viene a dividir;
-
-si te extiende la mano tenés que verlo como demanda y no como ayuda,
-
-porque sus frases tienen interpretaciones opuestas, escuchá la maldad detrás de sus ofrecimientos.
-
-Se enrosca en los corazones que enfrió, si te volvés serpiente se podría anudar con vos, o sea que va a asfixiar cuando intentes desenredarte.`
-  },
-  {
-    pagina: 13,
-    titulo: "Huairavo",
-    contenido: `Desde chico me decían que era el pájaro de los brujos.
-
-No lo escuchaba cantar sin que le siguieran insultos.
-
-Me dijeron que anuncia la muerte,
-
-y que también es un buen o mal augurio,
-
-dependiendo de lo que haga.
-
-Cada vez que el odio se me imponía, su grito me delataba.
-
-Ahora, en lo que no distingo si es desidia o ataraxia,
-
-creo que cada vez que raspa algo
-
-está buscando lo más parecido que encontró a su canto gutural.`
-  },
-  {
-    pagina: 14,
-    titulo: "Imposiblemente iguales",
-    contenido: `¿Cómo podríamos ser almas gemelas si no se le puede quitar la quiralidad a un espejo?
-
-Vi nuestras almas, hechas geometría,
-
-pero tu símbolo superpuesto al mío invertía mi significado.
-
-La profundidad dibujada en dos dimensiones del espejo deja de ser ilusoria
-
-cuando te volvés invisible.
-
-Del otro lado estuve a punto de admirarte.
-
-Pero para mí, la estupidez se mide por tu inteligencia para hacer el mal.`
-  },
-  {
-    pagina: 15,
-    titulo: "",
-    contenido: `Dios tiene un río de felicidad de intensidad infinita,
-
-que diluye la mente para que en ella también fluya.
-
-Y una paz que siempre es inconcebiblemente más profunda,
-
-que me dio mi primera noción de infinidad.
-
-La aureola simboliza coronas superpuestas.
-
-Hay un viento que hace que solo se pueda estar en la cima arrodillado,
-
-para restarle la fuerza suficiente a su empuje.
-
-No sentado, porque no puede ser un trono.
-
-Ni acostado, porque dormirse en los laureles
-
-es renunciar a la gloria dejando caer todo el aceite.`
-  },
-  {
-    pagina: 16,
-    titulo: "Oscureciendo en diferido",
-    contenido: `Sin el más mínimo atisbo de expresividad,
-
-sin poder creer que esa expresión nula pueda ser tan transmitente.
-
-Con unas ojeras tan negras como la copa que acusa, pero que todos señalan.
-
-Esa copa se ennegreció antes del anochecer.
-
-No sabíamos cómo volver a escuchar los latidos cada vez más imperceptibles
-
-de corazones que se negaban a seguir latiendo.`
-  },
-  {
-    pagina: 17,
-    titulo: "Zugzwang onírico",
-    contenido: `Fui una esfera hecha de iris viendo cada ángulo, todo alrededor.
-
-Te vi limando las dos caras de la moneda del juicio
-
-con la lija de tu lengua seca.
-
-Vi un gato con sigilo absoluto,
-
-que por odio al cascabel en su correa,
-
-pulió su presencia inmune.
-
-¿te gustan los símbolos?
-
-tenés el halo de la luna de aureola
-
-podrían ser la señal de los cuernos que te dibuja o de santidad,
-
-ahora solo me dedico a buscar más de Dios.`
-  }
-];
-
-// ========== RUTAS API ==========
-app.get('/api/libro', (req, res) => {
-  res.json(libroData);
-});
-
-app.get('/api/config', (req, res) => {
-  res.json({
-    alias: process.env.MP_ALIAS || 'amaru77mp',
-    donationLink: process.env.MP_DONATION_LINK || 'https://mpago.la/ejemplo'
-  });
-});
-
-// ========== RUTA PDF – VERSIÓN PROLIJA ==========
-app.get('/api/descargar-pdf', (req, res) => {
-  try {
-    const doc = new PDFDocument({
-      margin: 60,
-      size: 'A4',
-      info: {
-        Title: 'Portal Simetría Antitética',
-        Author: 'Amaru Poemarios'
-      }
-    });
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="Portal_Simetria_Antitetica_Amaru.pdf"');
-    doc.pipe(res);
-
-    // ─── PORTADA ────────────────────────────────────────
-    doc.font('Helvetica-Bold')
-       .fontSize(28)
-       .text('Portal Simetría Antitética', { align: 'center' });
-    doc.moveDown(1.5);
-
-    doc.font('Helvetica')
-       .fontSize(18)
-       .text('Amaru Poemarios', { align: 'center' });
-    doc.moveDown(0.5);
-
-    doc.fontSize(14)
-       .text('Poemario de amor y desamor', { align: 'center' });
-    doc.moveDown(2);
-
-    doc.fontSize(12)
-       .text('© 2025 – Todos los derechos reservados', { align: 'center' });
-    doc.moveDown(4);
-
-    // Línea decorativa
-    doc.moveTo(100, doc.y)
-       .lineTo(doc.page.width - 100, doc.y)
-       .stroke('#b8860b');
-    doc.moveDown(3);
-
-    doc.fontSize(11)
-       .text('"Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños."', {
-         align: 'center',
-         italic: true
-       });
-    doc.moveDown(2);
-    doc.text('Entre tantos mensajes en símbolos no hay puntada sin hilo.', { align: 'center' });
-    doc.text('Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.', { align: 'center' });
-
-    // ─── POEMAS (cada uno en página nueva) ────────────────
-    libroData.forEach((pag, index) => {
-      if (index > 0) doc.addPage();
-
-      if (pag.titulo) {
-        doc.font('Helvetica-Bold')
-           .fontSize(20)
-           .text(pag.titulo, { align: 'center' });
-        doc.moveDown(0.5);
-        doc.moveTo(120, doc.y)
-           .lineTo(doc.page.width - 120, doc.y)
-           .stroke('#b8860b');
-        doc.moveDown(1);
-      }
-
-      doc.font('Helvetica')
-         .fontSize(12)
-         .text(pag.contenido, {
-           align: 'justify',
-           lineGap: 8,
-           indent: 30,
-           continued: false
-         });
-
-      // Número de página
-      const pageNumber = doc.page.number;
-      doc.fontSize(10)
-         .text(`Página ${pageNumber}`, {
-           align: 'center',
-           lineGap: 0
-         });
-    });
-
-    doc.end();
-
-  } catch (e) {
-    console.error('Error al generar PDF:', e);
-    res.status(500).send('Error al generar el PDF');
-  }
-});
-
-// Cualquier otra ruta: SPA (sirve index.html)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// ========== ARRANQUE ==========
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-});
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://poemarioamaru.onrender.com">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>Amaru Poemarios</title>
+    <style>
+        body {
+            margin: 0;
+            background: #050505;
+            color: #d4d4d4;
+            font-family: Georgia, serif;
+            -webkit-user-select: none;
+            user-select: none;
+            padding-bottom: 40px;
+        }
+        .main-wrapper {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .hero-row {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 30px;
+            background: #0d0d0d;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #1a1a1a;
+        }
+        .portada-frame {
+            flex: 0 0 350px;
+            max-width: 350px;
+            height: 475px;
+            background: #000;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 6px;
+        }
+        #img-portada {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .col-derecha {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .resena-text {
+            font-style: italic;
+            font-size: 1.2rem;
+            line-height: 1.7;
+        }
+        .acciones-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .accion-btn {
+            width: 280px;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .accion-btn.leer {
+            background: #b8860b;
+            color: white;
+        }
+        .accion-btn.leer:hover {
+            background: #9e740a;
+        }
+        .accion-btn.descargar {
+            background: #2a2a2a;
+            color: #d4af37;
+            border: 1px solid #d4af37;
+        }
+        .accion-btn.descargar:hover {
+            background: #3a3a3a;
+        }
+        .accion-btn.donar {
+            background: #009ee3;
+            color: white;
+        }
+        .accion-btn.donar:hover {
+            background: #0082c7;
+        }
+        .alias-copy {
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #d4af37;
+            cursor: pointer;
+            text-decoration: underline;
+            background: none;
+            border: none;
+            font-family: Georgia, serif;
+        }
+        #lectorPrincipal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.98);
+            z-index: 20000;
+            justify-content: center;
+            align-items: center;
+        }
+        .lector-contenedor {
+            width: 85vw;
+            height: 85vh;
+            background: #f4f1ea;
+            color: #1a1a1a;
+            border: 2px solid #d4af37;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+        #hoja-libro {
+            flex-grow: 1;
+            padding: 50px 25px 30px 40px;
+            overflow-y: scroll;
+            font-size: 1.3rem;
+            line-height: 1.7;
+            scroll-behavior: smooth;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            transition: background 0.3s, color 0.3s;
+        }
+        #hoja-libro::-webkit-scrollbar {
+            width: 8px;
+        }
+        #hoja-libro::-webkit-scrollbar-track {
+            background: #e9e4d9;
+            border-radius: 10px;
+        }
+        #hoja-libro::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 10px;
+            border: 2px solid #e9e4d9;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5rem;
+            color: #d4af37;
+            opacity: 0.8;
+            pointer-events: none;
+            animation: pulse 1.5s infinite;
+            display: none;
+            transition: color 0.3s;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: translateX(-50%) translateY(0); }
+            50% { opacity: 1; transform: translateX(-50%) translateY(5px); }
+            100% { opacity: 0.4; transform: translateX(-50%) translateY(0); }
+        }
+        .barra-navegacion {
+            height: 60px;
+            background: #e9e4d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            border-top: 1px solid #d4af37;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+            flex-shrink: 0;
+        }
+        .barra-navegacion button {
+            width: auto;
+            padding: 8px 20px;
+            background: #1a1a1a;
+            color: #d4af37;
+            border: 1px solid #d4af37;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .barra-navegacion button:hover {
+            background: #333;
+        }
+        .barra-navegacion span {
+            font-family: serif;
+            font-weight: bold;
+            color: #333;
+            transition: color 0.3s;
+        }
+        .barra-navegacion .modo-btn {
+            background: transparent;
+            border: 1px solid #aaa;
+            color: #333;
+            font-size: 1.2rem;
+            padding: 6px 12px;
+        }
+        .barra-navegacion .modo-btn:hover {
+            background: #ccc;
+        }
+        .lector-contenedor.modo-oscuro {
+            background: #0d0d0d;
+            border-color: #d4af37;
+        }
+        .lector-contenedor.modo-oscuro #hoja-libro {
+            background: #0d0d0d;
+            color: #b0d4ff;
+        }
+        .lector-contenedor.modo-oscuro #hoja-libro h1 {
+            color: #d4af37 !important;
+            border-bottom-color: #d4af37;
+        }
+        .lector-contenedor.modo-oscuro .barra-navegacion {
+            background: #1a1a1a;
+            border-top-color: #d4af37;
+        }
+        .lector-contenedor.modo-oscuro .barra-navegacion span {
+            color: #b0d4ff;
+        }
+        .lector-contenedor.modo-oscuro .barra-navegacion button {
+            background: #2a2a2a;
+            color: #d4af37;
+            border-color: #d4af37;
+        }
+        .lector-contenedor.modo-oscuro .barra-navegacion button:hover {
+            background: #444;
+        }
+        .lector-contenedor.modo-oscuro .barra-navegacion .modo-btn {
+            color: #d4af37;
+            border-color: #d4af37;
+            background: transparent;
+        }
+        .lector-contenedor.modo-oscuro .barra-navegacion .modo-btn:hover {
+            background: #2a2a2a;
+        }
+        .lector-contenedor.modo-oscuro .scroll-indicator {
+            color: #d4af37;
+        }
+        .lector-contenedor.modo-oscuro #hoja-libro::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        .lector-contenedor.modo-oscuro #hoja-libro::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-color: #1a1a1a;
+        }
+        @media (max-width: 600px) {
+            .hero-row {
+                flex-direction: column;
+                align-items: center;
+            }
+            .portada-frame {
+                flex: 0 0 auto;
+                max-width: 275px;
+                height: 375px;
+            }
+            .col-derecha {
+                align-items: center;
+                text-align: center;
+            }
+            .accion-btn {
+                width: 240px;
+            }
+            #hoja-libro {
+                padding: 40px 8px 30px 12px;
+                font-size: 0.95rem;
+            }
+            .barra-navegacion {
+                gap: 10px;
+                flex-wrap: wrap;
+                height: auto;
+                padding: 8px 0;
+            }
+            .barra-navegacion button {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div class="main-wrapper">
+        <div class="hero-row">
+            <div class="portada-frame">
+                <img id="img-portada" src="/portada.jpg" alt="Portada del libro">
+            </div>
+            <div class="col-derecha">
+                <div class="resena-text">
+                    Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños.<br><br>
+                    Entre tantos mensajes en símbolos no hay puntada sin hilo. Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.
+                </div>
+                <div class="acciones-container">
+                    <button class="accion-btn leer" onclick="iniciarLectura()">📖 Leer Ahora</button>
+                    <button class="accion-btn descargar" onclick="descargarPDF()">📥 Descargar PDF</button>
+                    <button class="accion-btn donar" onclick="donarMP()">💛 Donar con Mercado Pago</button>
+                    <button class="alias-copy" onclick="copiarAlias()">Copiar alias: <span id="alias-mp">Cargando...</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="lectorPrincipal">
+        <button onclick="cerrarLector()" style="position:fixed; right:20px; top:20px; width:45px; height:45px; border-radius:50%; background:#d4af37; border:none; font-size:30px; cursor:pointer; color:black; font-weight:bold; z-index:20001; display:flex; align-items:center; justify-content:center;">&times;</button>
+        <div class="lector-contenedor" id="lectorContenedor">
+            <div id="hoja-libro"></div>
+            <div id="scroll-indicator" class="scroll-indicator">▼</div>
+            <div class="barra-navegacion">
+                <button onclick="cambiarPagina(-1)">ANT</button>
+                <span>Página <span id="num-pagina">1</span></span>
+                <button onclick="cambiarPagina(1)">SIG</button>
+                <button class="modo-btn" onclick="toggleModoOscuro()" title="Alternar modo oscuro">🌙</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let libroData = [];
+        let paginaActual = 1;
+        let aliasMP = 'amaru77mp';
+        let donationLink = 'https://mpago.la/ejemplo';
+
+        async function cargarConfig() {
+            try {
+                const res = await fetch('/api/config');
+                if (res.ok) {
+                    const cfg = await res.json();
+                    aliasMP = cfg.alias || 'amaru77mp';
+                    donationLink = cfg.donationLink || 'https://mpago.la/ejemplo';
+                    document.getElementById('alias-mp').innerText = aliasMP;
+                } else {
+                    document.getElementById('alias-mp').innerText = aliasMP;
+                }
+            } catch (e) {
+                document.getElementById('alias-mp').innerText = aliasMP;
+            }
+        }
+
+        function toggleModoOscuro() {
+            const contenedor = document.getElementById('lectorContenedor');
+            contenedor.classList.toggle('modo-oscuro');
+            const isDark = contenedor.classList.contains('modo-oscuro');
+            localStorage.setItem('modoOscuro', isDark ? 'true' : 'false');
+            const btn = document.querySelector('.modo-btn');
+            if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+            actualizarIndicadorScroll();
+        }
+
+        function aplicarModoGuardado() {
+            const guardado = localStorage.getItem('modoOscuro');
+            if (guardado === 'true') {
+                const contenedor = document.getElementById('lectorContenedor');
+                contenedor.classList.add('modo-oscuro');
+                const btn = document.querySelector('.modo-btn');
+                if (btn) btn.textContent = '☀️';
+            }
+        }
+
+        function actualizarIndicadorScroll() {
+            const hoja = document.getElementById('hoja-libro');
+            const indicador = document.getElementById('scroll-indicator');
+            if (!hoja || !indicador) return;
+            const hayOverflow = hoja.scrollHeight > hoja.clientHeight + 5;
+            const estaAlFinal = hoja.scrollTop + hoja.clientHeight >= hoja.scrollHeight - 20;
+            if (hayOverflow && !estaAlFinal) {
+                indicador.style.display = 'block';
+            } else {
+                indicador.style.display = 'none';
+            }
+        }
+
+        async function iniciarLectura() {
+            if (libroData.length > 0) {
+                abrirLector();
+                return;
+            }
+            try {
+                const res = await fetch('/api/libro');
+                if (res.ok) {
+                    libroData = await res.json();
+                    localStorage.setItem('libroOffline', JSON.stringify(libroData));
+                    abrirLector();
+                } else {
+                    alert("No se pudo cargar el libro. Intentá de nuevo.");
+                }
+            } catch (e) {
+                const cache = localStorage.getItem('libroOffline');
+                if (cache) {
+                    libroData = JSON.parse(cache);
+                    abrirLector();
+                } else {
+                    alert("Sin conexión. Conectate a internet la primera vez.");
+                }
+            }
+        }
+
+        function abrirLector() {
+            document.getElementById('lectorPrincipal').style.display = 'flex';
+            aplicarModoGuardado();
+            cargarPagina(paginaActual || 1);
+            setTimeout(actualizarIndicadorScroll, 100);
+        }
+
+        function cargarPagina(num) {
+            const p = libroData.find(i => i.pagina == num);
+            if (p) {
+                const headerPoema = p.titulo ? `<h1 style="color:#b8860b; font-family:Georgia; border-bottom:1px solid #d4af37; padding-bottom:15px; margin-bottom:25px; font-size:1.8rem;">${p.titulo}</h1>` : '';
+                document.getElementById('hoja-libro').innerHTML = headerPoema + `<div style="white-space: pre-wrap;">${p.contenido}</div>`;
+                document.getElementById('num-pagina').innerText = num;
+                paginaActual = num;
+                document.getElementById('hoja-libro').scrollTop = 0;
+                setTimeout(actualizarIndicadorScroll, 50);
+            }
+        }
+
+        function cerrarLector() {
+            document.getElementById('lectorPrincipal').style.display = 'none';
+        }
+
+        function cambiarPagina(d) {
+            let n = paginaActual + d;
+            if (n >= 1 && n <= libroData.length) cargarPagina(n);
+        }
+
+        function descargarPDF() {
+            window.open('/api/descargar-pdf', '_blank');
+        }
+
+        function copiarAlias() {
+            navigator.clipboard.writeText(aliasMP).then(() => {
+                alert("Alias copiado: " + aliasMP);
+            }).catch(() => {
+                prompt("Copiá manualmente el alias:", aliasMP);
+            });
+        }
+
+        function donarMP() {
+            window.open(donationLink, '_blank');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarConfig();
+            const hoja = document.getElementById('hoja-libro');
+            if (hoja) {
+                hoja.addEventListener('scroll', actualizarIndicadorScroll);
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('lectorPrincipal').style.display === 'flex') {
+                if (e.key === 'ArrowRight') cambiarPagina(1);
+                if (e.key === 'ArrowLeft') cambiarPagina(-1);
+                if (e.key === 'ArrowDown') {
+                    document.getElementById('hoja-libro').scrollBy(0, 300);
+                    actualizarIndicadorScroll();
+                }
+                if (e.key === 'ArrowUp') {
+                    document.getElementById('hoja-libro').scrollBy(0, -300);
+                    actualizarIndicadorScroll();
+                }
+            }
+        });
+
+        window.onload = () => {
+            fetch('/api/libro')
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data) {
+                        libroData = data;
+                        localStorage.setItem('libroOffline', JSON.stringify(data));
+                    }
+                })
+                .catch(() => {});
+        };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
+</body>
+</html>
