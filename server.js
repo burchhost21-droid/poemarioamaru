@@ -10,16 +10,320 @@ app.use(express.json());
 app.use(cors());
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
 
-// Servir archivos estáticos desde la raíz, pero sin servir index automáticamente
+// Servir archivos estáticos desde la MISMA carpeta (raíz) SIN index automático
 app.use(express.static(__dirname, { index: false }));
 
-// Ruta principal: forzar index.html
+// Ruta principal: FORZAR index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ========== CONTENIDO DEL LIBRO ==========
-// (aquí va todo el array libroData que ya tenés)
+// ========== CONTENIDO COMPLETO DEL LIBRO (TAL CUAL LO PUSISTE) ==========
+const libroData = [
+  {
+    pagina: 1,
+    titulo: "DERECHOS RESERVADOS © 2025",
+    contenido: `Esta obra está protegida por la Ley N.º 11.723 de Propiedad Intelectual de la República Argentina.
+
+Todos los derechos de reproducción, distribución, comunicación pública y transformación están reservados al autor.
+
+Está prohibida su reproducción total o parcial por cualquier medio, actual o futuro, sin autorización expresa del autor.
+
+Registrada bajo las normativas argentinas de protección autoral.
+
+Declaración jurada de originalidad: esta obra es creación 100 % original del autor argentino.`
+  },
+  {
+    pagina: 2,
+    titulo: "Santificación boicoteada",
+    contenido: `El eco de los gritos no emitidos tarda mucho más en disiparse,
+
+los jadeos no pronunciados caen en escupitajos amargos,
+
+la violencia se escapa de las pupilas para adquirir sustancia,
+
+estás a un secreto de que tu mueca forzada sea insostenible
+
+y a dos de que sea ingesticulable.
+
+Cuando la muerte es espiritual, la tumba es de hielo negro, transparente pero no translúcido.
+
+Lo sé porque, por mucho que alguien brillara del otro lado, yo seguía igual de entenebrecido.`
+  },
+  {
+    pagina: 3,
+    titulo: "Dicen que la envidia atrae insectos a los sueños",
+    contenido: `Sombras sin nada que las proyecte convergen hasta justificarse,
+
+brota brea de esa herida que se le abre al aire.
+
+Una araña había completado ese atrapasueños, el que ahora hace bailar, burlándose de mis plumas inmóviles.
+
+No me quejo,
+
+tal vez las inspires como a mí estos sueños rebeldes a punto de volverse materiales.`
+  },
+  {
+    pagina: 4,
+    titulo: "Hechizado = amor maldito",
+    contenido: `Me siento liviano, imantado, estoy por irme de mi cuerpo.
+
+Si logro salirme de mi pecho voy a buscarte, para desbordar tus sentidos.
+
+De antítesis a simetría, inevitable resonar, a un paso desde tan lejos.
+
+El objetivo de cada abrazo será superponer los corazones.
+
+Fundite en mí hasta que no haya un movimiento sin sinergia,
+
+ninguna caricia que te dé que no se sienta un poco propia.
+
+Dejame fundirme en vos hasta estar hecho de tus deseos.`
+  },
+  {
+    pagina: 5,
+    titulo: "Hay un puñal de estrellas que siempre apunta al norte",
+    contenido: `¿Tantos ojos en uno sin sumarse panorama?
+
+Vi más en los símbolos de uno solo.
+
+Tenemos las mismas estrellas de norte, pero para mí es una cruz y para ustedes un puñal.
+
+Mi cruz no está invertida; son ustedes empuñando el filo.
+
+Así que no me acuses de lo que causas.
+
+Debe ser romanos 2:1
+
+hipócrita.`
+  },
+  {
+    pagina: 6,
+    titulo: "La geometría sagrada es música encriptada",
+    contenido: `Amo traducirte flores a tablaturas para no tener que cortarlas, y por poder olvidar la teoría musical,
+
+dibujar con melodías, prometer con los ojos, flotar a contracorriente de lo que emanás.
+
+¿Habrás escuchado las promesas que no dije? 
+
+Veo una amenaza en tus ojos tiernos llenos de luz.`
+  },
+  {
+    pagina: 7,
+    titulo: "Tengo tatuada una runa necromancer en el pecho",
+    contenido: `Te dedico las transiciones
+
+de hilo conductor a encaje
+
+Y de grietas a runas sobre los auges colapsados que creí pisos,
+
+en mis pilares derruidos; promesas rotas y de verdades que ya no son
+
+y en mi alma agrietada de aridez.
+
+Por eso llevo tatuado, sobre la somatización de lo que inspiró este libro,
+
+uno de los muchos intentos de sentirme vivo.
+
+Para darte un “yo” con algo más que desolación.`
+  },
+  {
+    pagina: 8,
+    titulo: "Victorias pírricas",
+    contenido: `Progreso por regresiones, introspección en proyecciones.
+
+A veces, lo correcto es poner las piezas en sus casillas iniciales.
+
+Después de ver mi luz retraerse y tu oscuridad propagarse, 
+
+nos veo en una nueva balanza, de nuevo verticalizada, pero esta sí es justa,
+
+en la anterior, desde abajo veía tu trasfondo,
+
+y en la actual desde arriba tu conciencia ardiendo sin iluminar, degradándose.`
+  },
+  {
+    pagina: 9,
+    titulo: "Me dijo un pájarito que nuestro hilo no era rojo antes de que yo esté así de herido",
+    contenido: `Me escucho sollozar a lo lejos
+
+¿Querías sugestionarme o burlarte con el muñeco que tiraste a mi patio?
+
+¿Crees si digo que no me importa? porque...
+
+¿Alguna vez trepaste por los nudos que le hicieron a tu historia?
+
+Ahora, entrelazando historias, se desenreda la trama.
+
+Me parchaste los ojos, pero todo transmutó,
+
+Así que para que no veas mis ojeras negras como tu victoria
+
+sabé que subrayan con brea mis lámparas noctámbulas,
+
+Gracias a las que supe que debía soltar nuestro hilo, para que no sientas frío lejos de mí,
+
+destejida de tu pasión encarnada.
+
+Ahora entiendo tu cinismo, usabas poemarios de amor como grimorios de invocación,
+
+como yo las letras del metal más pesado como versos de amor.
+
+No le pedí a Dios que rompa la maldición, dejé que siga siendo contraproducente
+
+¿No leíste que a sus escogidos todo les favorece?`
+  },
+  {
+    pagina: 10,
+    titulo: "A veces encuentro gualichos en mi patio",
+    contenido: `Anduve sin dormir ni despertar del todo
+
+deseando un alma con lo que me falta, 
+
+alguna voluntad, para volver a ser.
+
+Con mi espíritu sangrando su luz hasta apagarse
+
+al ver que la vida no transcurre a la par del tiempo.
+
+Con una cinta negra abrochada al pecho, la cual no me saqué de mi yo tejido,
+
+hasta que terminar el duelo por quien debía ser
+
+y de todo lo que no viví.
+
+Mi corazón dio un grito por voluntad propia, como si pudiera devolverte el humo impregnado,
+
+o de un gruñido rasparme el pecho por dentro para escupir tu infección corporizada.`
+  },
+  {
+    pagina: 11,
+    titulo: "En el eje de los sucesos ves armonía desde el centro del caos",
+    contenido: `¡Apofenia! ¡Ilusiones estadísticas!
+
+¡Correlaciones espurias!
+
+Da igual, sería estúpido seguir considerando todas estas casualidades como tales.
+
+Si todos tienen la frase siguiente de una sola narrativa ¿qué significa?
+
+No me importa si es magia o si son alucinaciones.
+
+Solo puedo pensar:
+
+¡Qué reconfortante un caos tan intenso después de una tranquilidad prolongada hasta el desespero!`
+  },
+  {
+    pagina: 12,
+    titulo: "Maldiciones brillantes",
+    contenido: `La serpiente tiene la lengua bifurcada como mal augurio de que viene a dividir;
+
+si te extiende la mano tenés que verlo como demanda y no como ayuda,
+
+porque sus frases tienen interpretaciones opuestas, escuchá la maldad detrás de sus ofrecimientos.
+
+Se enrosca en los corazones que enfrió, si te volvés serpiente se podría anudar con vos, o sea que va a asfixiar cuando intentes desenredarte.`
+  },
+  {
+    pagina: 13,
+    titulo: "Huairavo",
+    contenido: `Desde chico me decían que era el pájaro de los brujos.
+
+No lo escuchaba cantar sin que le siguieran insultos.
+
+Me dijeron que anuncia la muerte,
+
+y que también es un buen o mal augurio,
+
+dependiendo de lo que haga.
+
+Cada vez que el odio se me imponía, su grito me delataba.
+
+Ahora, en lo que no distingo si es desidia o ataraxia,
+
+creo que cada vez que raspa algo
+
+está buscando lo más parecido que encontró a su canto gutural.`
+  },
+  {
+    pagina: 14,
+    titulo: "Imposiblemente iguales",
+    contenido: `¿Cómo podríamos ser almas gemelas si no se le puede quitar la quiralidad a un espejo?
+
+Vi nuestras almas, hechas geometría,
+
+pero tu símbolo superpuesto al mío invertía mi significado.
+
+La profundidad dibujada en dos dimensiones del espejo deja de ser ilusoria
+
+cuando te volvés invisible.
+
+Del otro lado estuve a punto de admirarte.
+
+Pero para mí, la estupidez se mide por tu inteligencia para hacer el mal.`
+  },
+  {
+    pagina: 15,
+    titulo: "",
+    contenido: `Dios tiene un río de felicidad de intensidad infinita,
+
+que diluye la mente para que en ella también fluya.
+
+Y una paz que siempre es inconcebiblemente más profunda,
+
+que me dio mi primera noción de infinidad.
+
+La aureola simboliza coronas superpuestas.
+
+Hay un viento que hace que solo se pueda estar en la cima arrodillado,
+
+para restarle la fuerza suficiente a su empuje.
+
+No sentado, porque no puede ser un trono.
+
+Ni acostado, porque dormirse en los laureles
+
+es renunciar a la gloria dejando caer todo el aceite.`
+  },
+  {
+    pagina: 16,
+    titulo: "Oscureciendo en diferido",
+    contenido: `Sin el más mínimo atisbo de expresividad,
+
+sin poder creer que esa expresión nula pueda ser tan transmitente.
+
+Con unas ojeras tan negras como la copa que acusa, pero que todos señalan.
+
+Esa copa se ennegreció antes del anochecer.
+
+No sabíamos cómo volver a escuchar los latidos cada vez más imperceptibles
+
+de corazones que se negaban a seguir latiendo.`
+  },
+  {
+    pagina: 17,
+    titulo: "Zugzwang onírico",
+    contenido: `Fui una esfera hecha de iris viendo cada ángulo, todo alrededor.
+
+Te vi limando las dos caras de la moneda del juicio
+
+con la lija de tu lengua seca.
+
+Vi un gato con sigilo absoluto,
+
+que por odio al cascabel en su correa,
+
+pulió su presencia inmune.
+
+¿te gustan los símbolos?
+
+tenés el halo de la luna de aureola
+
+podrían ser la señal de los cuernos que te dibuja o de santidad,
+
+ahora solo me dedico a buscar más de Dios.`
+  }
+];
 
 // ========== RUTAS API ==========
 app.get('/api/libro', (req, res) => {
@@ -34,14 +338,38 @@ app.get('/api/config', (req, res) => {
 });
 
 app.get('/api/descargar-pdf', (req, res) => {
-  // (tu código de PDF)
+  try {
+    const doc = new PDFDocument({ margin: 50 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Portal_Simetria_Antitetica_Amaru.pdf"');
+    doc.pipe(res);
+
+    doc.fontSize(22).font('Helvetica-Bold').text('Portal Simetría Antitética', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(14).font('Helvetica').text('Amaru Poemarios', { align: 'center' });
+    doc.moveDown(2);
+
+    libroData.forEach(pag => {
+      if (pag.titulo) {
+        doc.fontSize(16).font('Helvetica-Bold').text(pag.titulo, { underline: true });
+        doc.moveDown(0.5);
+      }
+      doc.fontSize(12).font('Helvetica').text(pag.contenido, { lineGap: 5 });
+      doc.moveDown(1.5);
+    });
+
+    doc.end();
+  } catch (e) {
+    res.status(500).send("Error al generar el PDF");
+  }
 });
 
-// Cualquier otra ruta (para el SPA) también sirve index.html
+// Cualquier otra ruta (para el SPA) sirve index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ========== ARRANQUE ==========
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
