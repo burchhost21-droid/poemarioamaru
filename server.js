@@ -10,8 +10,8 @@ app.use(express.json());
 app.use(cors());
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
 
-// Servir archivos estáticos desde la carpeta "public"
-app.use(express.static(path.join(__dirname, 'public')));
+// Servir archivos estáticos desde la MISMA carpeta (raíz)
+app.use(express.static(__dirname));
 
 // ========== CONTENIDO COMPLETO DEL LIBRO ==========
 const libroData = [
@@ -35,13 +35,10 @@ const libroData = [
 ];
 
 // ========== RUTAS ==========
-
-// 1. Libro completo (público)
 app.get('/api/libro', (req, res) => {
   res.json(libroData);
 });
 
-// 2. Configuración (alias y link de donación) desde variables de entorno
 app.get('/api/config', (req, res) => {
   res.json({
     alias: process.env.MP_ALIAS || 'amaru77mp',
@@ -49,7 +46,6 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// 3. Descarga PDF
 app.get('/api/descargar-pdf', (req, res) => {
   try {
     const doc = new PDFDocument({ margin: 50 });
@@ -57,13 +53,11 @@ app.get('/api/descargar-pdf', (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename="Portal_Simetria_Antitetica_Amaru.pdf"');
     doc.pipe(res);
 
-    // Portada
     doc.fontSize(22).font('Helvetica-Bold').text('Portal Simetría Antitética', { align: 'center' });
     doc.moveDown();
     doc.fontSize(14).font('Helvetica').text('Amaru Poemarios', { align: 'center' });
     doc.moveDown(2);
 
-    // Contenido
     libroData.forEach(pag => {
       if (pag.titulo) {
         doc.fontSize(16).font('Helvetica-Bold').text(pag.titulo, { underline: true });
@@ -79,12 +73,11 @@ app.get('/api/descargar-pdf', (req, res) => {
   }
 });
 
-// Cualquier otra ruta carga index.html desde "public"
+// Cualquier otra ruta carga index.html (desde la raíz)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ========== ARRANQUE ==========
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor público corriendo en puerto ${PORT}`);
