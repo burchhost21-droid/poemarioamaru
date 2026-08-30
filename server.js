@@ -331,10 +331,11 @@ app.get('/api/libro', (req, res) => {
   res.json(libroData);
 });
 
+// ========== RUTA /api/config ==========
 app.get('/api/config', (req, res) => {
   res.json({
-    alias: process.env.MP_ALIAS || 'amaru77mp',
-    donationLink: process.env.MP_DONATION_LINK || 'https://mpago.la/ejemplo'
+    alias: process.env.MP_ALIAS || 'amaru77mp',                     // ← Alias real
+    donationLink: process.env.MP_DONATION_LINK || 'https://link.mercadopago.com.ar/amaru77'  // ← Link sin monto fijo
   });
 });
 
