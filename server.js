@@ -189,7 +189,7 @@ al ver que la vida no transcurre a la par del tiempo.
 
 Con una cinta negra abrochada al pecho, la cual no me saqué de mi yo tejido,
 
-hasta que terminar el duelo por quien debía ser
+no hasta terminar el duelo por quien debía ser
 
 y de todo lo que no viví.
 
