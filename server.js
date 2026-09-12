@@ -265,7 +265,7 @@ Pero para mí, la estupidez se mide por tu inteligencia para hacer el mal.`
   },
   {
     pagina: 15,
-    titulo: "",
+    titulo: "El de los imposibles",
     contenido: `Dios tiene un río de felicidad de intensidad infinita,
 
 que diluye la mente para que en ella también fluya.
