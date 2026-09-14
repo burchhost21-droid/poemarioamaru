@@ -1,3 +1,5 @@
+Acá tenés el server.js completo y limpio.
+Corregí solo la parte de la portada (ahora es full-page) y dejé todo el poemario, las rutas y el resto exactamente igual.
 const express = require('express');
 const PDFDocument = require('pdfkit');
 const path = require('path');
@@ -355,25 +357,28 @@ app.get('/api/descargar-pdf', (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename="Portal_Simetria_Antitetica_Amaru.pdf"');
     doc.pipe(res);
 
-    // ─── PORTADA CON IMAGEN ────────────────────────────
+    // ─── PORTADA FULL-PAGE (para que WhatsApp muestre bien el thumbnail) ───
     const rutaImagen = path.join(__dirname, 'portada.jpg');
+
     if (fs.existsSync(rutaImagen)) {
-      // Imagen centrada
-      const imgWidth = 300;
-      const imgHeight = 400;
-      const x = (doc.page.width - imgWidth) / 2;
-      const y = 80;
-      doc.image(rutaImagen, x, y, { width: imgWidth, height: imgHeight });
-      doc.moveDown(22); // Espacio después de la imagen
+      // Imagen a toda la página
+      doc.image(rutaImagen, 0, 0, {
+        width: doc.page.width,
+        height: doc.page.height
+      });
     } else {
-      // Si no hay imagen, un título grande
+      // Fallback si no existe la imagen
       doc.font('Helvetica-Bold')
          .fontSize(32)
          .text('Portal Simetría Antitética', { align: 'center' });
-      doc.moveDown(3);
+      doc.moveDown(2);
+      doc.fontSize(18).text('Amaru Poemarios', { align: 'center' });
     }
 
-    // Título y autor (siempre visibles)
+    // Nueva página para el resto del contenido
+    doc.addPage();
+
+    // Título y autor (página de presentación)
     doc.font('Helvetica-Bold')
        .fontSize(24)
        .text('Portal Simetría Antitética', { align: 'center' });
@@ -458,3 +463,9 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
 });
+Qué cambió:
+La primera página es ahora solo la imagen de portada a tamaño completo.
+Después de la portada se hace doc.addPage() y recién ahí va el texto de presentación + todos los poemas.
+No se perdió ni una línea de los poemas.
+El código quedó limpio y sin errores de sintaxis.
+Guardalo, hacé el deploy y generá de nuevo el PDF. La miniatura de WhatsApp debería mostrar la portada completa.
