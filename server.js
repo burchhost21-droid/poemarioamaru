@@ -1,25 +1,66 @@
-Acá tenés el server.js completo y limpio.
-Corregí solo la parte de la portada (ahora es full-page) y dejé todo el poemario, las rutas y el resto exactamente igual.
 const express = require('express');
 const PDFDocument = require('pdfkit');
 const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit'); // ← hay que instalar: npm i express-rate-limit
 const fs = require('fs');
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(express.json());
-app.use(cors());
-app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: false }));
 
-// Servir archivos estáticos desde la raíz, sin index automático
+// Seguridad básica
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: false,
+  hidePoweredBy: true
+}));
+
+app.use(cors({
+  origin: true, // o poner tu dominio específico
+  methods: ['GET', 'POST'],
+  maxAge: 86400
+}));
+
+// Límite de tamaño de body (evita payloads enormes)
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ extended: false, limit: '50kb' }));
+
+// ========== RATE LIMITERS ==========
+
+// Rate limiter general (todas las rutas)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 200,                 // 200 requests por IP cada 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas peticiones. Intentá de nuevo en unos minutos.' },
+  // Si querés ser más agresivo contra bots:
+  // skipSuccessfulRequests: false,
+});
+
+// Rate limiter más estricto para generación de PDF (ruta pesada)
+const pdfLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutos
+  max: 8,                   // máximo 8 PDFs por IP cada 10 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Estás generando demasiados PDFs. Esperá un poco.' }
+});
+
+// Aplicar el general a todo
+app.use(generalLimiter);
+
+// Servir archivos estáticos
 app.use(express.static(__dirname, { index: false }));
 
-// Ruta principal: forzar index.html
+// Ruta principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// ========== CONTENIDO COMPLETO DEL LIBRO (TUS POEMAS) ==========
+// ← acá va tu array de poemas exactamente como lo tenías
 
 // ========== CONTENIDO COMPLETO DEL LIBRO (TUS POEMAS) ==========
 const libroData = [
