@@ -504,9 +504,3 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
 });
-Qué cambió:
-La primera página es ahora solo la imagen de portada a tamaño completo.
-Después de la portada se hace doc.addPage() y recién ahí va el texto de presentación + todos los poemas.
-No se perdió ni una línea de los poemas.
-El código quedó limpio y sin errores de sintaxis.
-Guardalo, hacé el deploy y generá de nuevo el PDF. La miniatura de WhatsApp debería mostrar la portada completa.
