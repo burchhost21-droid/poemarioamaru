@@ -479,11 +479,17 @@ function generarPDF(res, { poemas, portada, titulo, autor, subtitulo, nombreArch
     doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke('#b8860b');
     doc.moveDown(2);
 
-    doc.fontSize(11).text('"Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños."', { align: 'center', italic: true });
-    doc.moveDown(1);
-    doc.text('Entre tantos mensajes en símbolos no hay puntada sin hilo.', { align: 'center' });
-    doc.text('Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.', { align: 'center' });
-
+   app.get('/api/descargar-pdf2', pdfLimiter, (req, res) => {
+  generarPDF(res, {
+    poemas: libro2Data,
+    portada: 'portada2.jpg',
+    titulo: 'Segundo Poemario',
+    autor: 'Amaru Poemarios',
+    subtitulo: 'Poemario',
+    nombreArchivo: 'Segundo_Poemario_Amaru.pdf',
+    sinopsis: 'Acá poné la sinopsis real del libro 2.'
+  });
+});
     // Poemas
     poemas.forEach((pag, index) => {
       if (index > 0) doc.addPage();
