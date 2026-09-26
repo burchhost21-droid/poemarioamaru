@@ -34,6 +34,20 @@
             border-radius: 12px;
             border: 1px solid #1a1a1a;
         }
+
+        /* ============================================
+           WRAPPER DE LA PORTADA + FLECHITAS
+           Las flechitas son hermanas de la portada
+           dentro de este flex, así nunca la tapan.
+           ============================================ */
+        .portada-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 0 0 auto;
+        }
+
         .portada-frame {
             flex: 0 0 350px;
             max-width: 350px;
@@ -45,14 +59,56 @@
             justify-content: center;
             overflow: hidden;
             border-radius: 6px;
-            position: relative; /* NUEVO: para que las flechitas se posicionen dentro */
+            position: relative;
         }
         #img-portada {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: opacity 0.3s ease; /* NUEVO: transición suave al cambiar de libro */
+            transition: opacity 0.3s ease;
         }
+
+        /* ============================================
+           FLECHITAS < >
+           Sin position absolute: son ítems flex del
+           .portada-wrapper, quedan afuera de la portada.
+           ============================================ */
+        .flecha {
+            background: transparent;
+            border: 0;
+            color: #d4af37;
+            font-family: "Georgia", serif;
+            font-size: 4.5rem;
+            line-height: 1;
+            font-weight: 300;
+            padding: 6px 10px;
+            cursor: pointer;
+            user-select: none;
+            text-shadow: 0 0 18px rgba(212, 175, 55, 0.35);
+            animation: titilar 4s ease-in-out infinite;
+            transition: transform 0.25s ease, color 0.25s ease, text-shadow 0.25s ease;
+        }
+        .flecha:hover {
+            color: #e9cd8f;
+            text-shadow: 0 0 28px rgba(212, 175, 55, 0.8);
+            transform: scale(1.15);
+            animation-play-state: paused;
+        }
+        .flecha:active {
+            transform: scale(1.02);
+        }
+        @keyframes titilar {
+            0%, 100% {
+                opacity: 0.45;
+                text-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
+            }
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 26px rgba(212, 175, 55, 0.75);
+            }
+        }
+        .flecha.next { animation-delay: 2s; }
+
         .col-derecha {
             flex: 1;
             display: flex;
@@ -263,16 +319,28 @@
             background: #d4af37;
             border-color: #1a1a1a;
         }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .portada-wrapper { gap: 6px; }
+            .flecha { font-size: 3.5rem; padding: 4px 6px; }
+        }
         @media (max-width: 600px) {
             .hero-row {
                 flex-direction: column;
                 align-items: center;
+            }
+            .portada-wrapper {
+                gap: 4px;
+                width: 100%;
+                justify-content: center;
             }
             .portada-frame {
                 flex: 0 0 auto;
                 max-width: 275px;
                 height: 375px;
             }
+            .flecha { font-size: 3rem; padding: 4px 4px; }
             .col-derecha {
                 align-items: center;
                 text-align: center;
@@ -295,88 +363,21 @@
                 font-size: 0.9rem;
             }
         }
-
-        /* ============================================
-           FLECHITAS DEL CARRUSEL  < >
-           ============================================ */
-
-        /* Estilo base: solo el carácter, grande, dorado, sin fondo ni borde */
-        .flecha {
-            position: absolute;              /* Se posicionan dentro del .portada-frame */
-            top: 50%;                        /* Centradas verticalmente */
-            transform: translateY(-50%);     /* Ajuste fino del centrado vertical */
-            border: 0;                       /* Sin borde */
-            background: transparent;         /* Sin fondo */
-            color: #d4af37;                  /* Dorado de la paleta */
-            font-family: "Georgia", serif;   /* Misma tipografía del sitio */
-            font-size: 4.5rem;               /* Grandecitas: ~72px en escritorio */
-            line-height: 1;                  /* Sin espacio extra arriba/abajo */
-            font-weight: 300;                /* Trazo fino y elegante */
-            padding: 6px 14px;               /* Área clickeable cómoda */
-            cursor: pointer;
-            z-index: 3;                      /* Por encima de la portada */
-            user-select: none;               /* No se selecciona el carácter al clickear */
-            text-shadow: 0 0 18px rgba(212, 175, 55, 0.35); /* Halo dorado suave */
-            animation: titilar 4s ease-in-out infinite;     /* Titileo lento */
-            transition: transform 0.25s ease, color 0.25s ease, text-shadow 0.25s ease;
-        }
-
-        /* Hover: se agranda, brilla más y se pausa el titileo */
-        .flecha:hover {
-            color: #e9cd8f;                                 /* Dorado más claro */
-            text-shadow: 0 0 28px rgba(212, 175, 55, 0.8);  /* Halo más intenso */
-            transform: translateY(-50%) scale(1.15);        /* Crece un 15% */
-            animation-play-state: paused;                   /* Frena el titileo */
-        }
-
-        /* Click: vuelve casi a su tamaño normal para dar feedback */
-        .flecha:active {
-            transform: translateY(-50%) scale(1.02);
-        }
-
-        /* Posición: una a cada costado del marco de la portada */
-        .flecha.prev { left: -120; }   /* "<" a la izquierda */
-        .flecha.next { right: -120; }  /* ">" a la derecha */
-
-        /* ============================================
-           TITILEO LENTO
-           Va de opacidad 0.45 a 1 y el brillo dorado
-           crece y decrece. Dura 4s, ida y vuelta.
-           ============================================ */
-        @keyframes titilar {
-            0%, 100% {
-                opacity: 0.45;
-                text-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
-            }
-            50% {
-                opacity: 1;
-                text-shadow: 0 0 26px rgba(212, 175, 55, 0.75);
-            }
-        }
-
-        /* Desfase: la flecha derecha arranca 2s después
-           para que no titilen al mismo tiempo */
-        .flecha.next { animation-delay: 2s; }
-
-        /* ============================================
-           RESPONSIVE: en celular se achican un poco
-           ============================================ */
-        @media (max-width: 520px) {
-            .flecha {
-                font-size: 3.2rem;   /* ~51px */
-                padding: 4px 8px;
-            }
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
     <div class="main-wrapper">
         <div class="hero-row">
-            <div class="portada-frame">
+
+            <!-- Portada + flechitas como hermanas flex -->
+            <div class="portada-wrapper">
                 <button class="flecha prev" onclick="cambiarLibro(-1)" aria-label="Libro anterior">&lt;</button>
-                <img id="img-portada" src="/portada.jpg" alt="Portada del libro">
+                <div class="portada-frame">
+                    <img id="img-portada" src="/portada.jpg" alt="Portada del libro">
+                </div>
                 <button class="flecha next" onclick="cambiarLibro(1)" aria-label="Libro siguiente">&gt;</button>
             </div>
+
             <div class="col-derecha">
                 <div class="resena-text" id="resena-text">
                     Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños.<br><br>
@@ -413,8 +414,6 @@
         let donationLink = 'https://mpago.la/ejemplo';
 
         // ===== Libros del carrusel =====
-        // Sumá acá los libros que quieras. El carrusel cicla entre ellos.
-        // Cuando tengas el segundo libro, cambiá 'leer' y 'pdf' por las rutas reales.
         const librosDisponibles = [
             {
                 portada: '/portada.jpg',
@@ -436,7 +435,6 @@
             libroActivo = (libroActivo + dir + librosDisponibles.length) % librosDisponibles.length;
             const libro = librosDisponibles[libroActivo];
 
-            // Fade out
             const img = document.getElementById('img-portada');
             img.style.opacity = 0;
 
@@ -447,7 +445,6 @@
                 img.style.opacity = 1;
             }, 200);
 
-            // Reset del caché del libro para que al "Leer" traiga el nuevo
             libroData = [];
             paginaActual = 1;
         }
