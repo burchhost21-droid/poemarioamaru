@@ -45,11 +45,13 @@
             justify-content: center;
             overflow: hidden;
             border-radius: 6px;
+            position: relative; /* NUEVO: para que las flechitas se posicionen dentro */
         }
         #img-portada {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: opacity 0.3s ease; /* NUEVO: transición suave al cambiar de libro */
         }
         .col-derecha {
             flex: 1;
@@ -293,16 +295,90 @@
                 font-size: 0.9rem;
             }
         }
+
+        /* ============================================
+           FLECHITAS DEL CARRUSEL  < >
+           ============================================ */
+
+        /* Estilo base: solo el carácter, grande, dorado, sin fondo ni borde */
+        .flecha {
+            position: absolute;              /* Se posicionan dentro del .portada-frame */
+            top: 50%;                        /* Centradas verticalmente */
+            transform: translateY(-50%);     /* Ajuste fino del centrado vertical */
+            border: 0;                       /* Sin borde */
+            background: transparent;         /* Sin fondo */
+            color: #d4af37;                  /* Dorado de la paleta */
+            font-family: "Georgia", serif;   /* Misma tipografía del sitio */
+            font-size: 4.5rem;               /* Grandecitas: ~72px en escritorio */
+            line-height: 1;                  /* Sin espacio extra arriba/abajo */
+            font-weight: 300;                /* Trazo fino y elegante */
+            padding: 6px 14px;               /* Área clickeable cómoda */
+            cursor: pointer;
+            z-index: 3;                      /* Por encima de la portada */
+            user-select: none;               /* No se selecciona el carácter al clickear */
+            text-shadow: 0 0 18px rgba(212, 175, 55, 0.35); /* Halo dorado suave */
+            animation: titilar 4s ease-in-out infinite;     /* Titileo lento */
+            transition: transform 0.25s ease, color 0.25s ease, text-shadow 0.25s ease;
+        }
+
+        /* Hover: se agranda, brilla más y se pausa el titileo */
+        .flecha:hover {
+            color: #e9cd8f;                                 /* Dorado más claro */
+            text-shadow: 0 0 28px rgba(212, 175, 55, 0.8);  /* Halo más intenso */
+            transform: translateY(-50%) scale(1.15);        /* Crece un 15% */
+            animation-play-state: paused;                   /* Frena el titileo */
+        }
+
+        /* Click: vuelve casi a su tamaño normal para dar feedback */
+        .flecha:active {
+            transform: translateY(-50%) scale(1.02);
+        }
+
+        /* Posición: una a cada costado del marco de la portada */
+        .flecha.prev { left: 0; }   /* "<" a la izquierda */
+        .flecha.next { right: 0; }  /* ">" a la derecha */
+
+        /* ============================================
+           TITILEO LENTO
+           Va de opacidad 0.45 a 1 y el brillo dorado
+           crece y decrece. Dura 4s, ida y vuelta.
+           ============================================ */
+        @keyframes titilar {
+            0%, 100% {
+                opacity: 0.45;
+                text-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
+            }
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 26px rgba(212, 175, 55, 0.75);
+            }
+        }
+
+        /* Desfase: la flecha derecha arranca 2s después
+           para que no titilen al mismo tiempo */
+        .flecha.next { animation-delay: 2s; }
+
+        /* ============================================
+           RESPONSIVE: en celular se achican un poco
+           ============================================ */
+        @media (max-width: 520px) {
+            .flecha {
+                font-size: 3.2rem;   /* ~51px */
+                padding: 4px 8px;
+            }
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
     <div class="main-wrapper">
         <div class="hero-row">
             <div class="portada-frame">
+                <button class="flecha prev" onclick="cambiarLibro(-1)" aria-label="Libro anterior">&lt;</button>
                 <img id="img-portada" src="/portada.jpg" alt="Portada del libro">
+                <button class="flecha next" onclick="cambiarLibro(1)" aria-label="Libro siguiente">&gt;</button>
             </div>
             <div class="col-derecha">
-                <div class="resena-text">
+                <div class="resena-text" id="resena-text">
                     Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños.<br><br>
                     Entre tantos mensajes en símbolos no hay puntada sin hilo. Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.
                 </div>
@@ -335,6 +411,46 @@
         let paginaActual = 1;
         let aliasMP = 'amaru77mp';
         let donationLink = 'https://mpago.la/ejemplo';
+
+        // ===== Libros del carrusel =====
+        // Sumá acá los libros que quieras. El carrusel cicla entre ellos.
+        // Cuando tengas el segundo libro, cambiá 'leer' y 'pdf' por las rutas reales.
+        const librosDisponibles = [
+            {
+                portada: '/portada.jpg',
+                resena: 'Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños.<br><br>Entre tantos mensajes en símbolos no hay puntada sin hilo. Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.',
+                leer: '/api/libro',
+                pdf: '/api/descargar-pdf'
+            },
+            {
+                portada: '/portada2.jpg',
+                resena: 'Próximamente: el segundo poemario. Otros símbolos, otras runas, otras geometrías del alma.',
+                leer: '/api/libro',
+                pdf: '/api/descargar-pdf'
+            }
+        ];
+
+        let libroActivo = 0;
+
+        function cambiarLibro(dir) {
+            libroActivo = (libroActivo + dir + librosDisponibles.length) % librosDisponibles.length;
+            const libro = librosDisponibles[libroActivo];
+
+            // Fade out
+            const img = document.getElementById('img-portada');
+            img.style.opacity = 0;
+
+            setTimeout(() => {
+                img.src = libro.portada;
+                img.alt = 'Portada del libro';
+                document.getElementById('resena-text').innerHTML = libro.resena;
+                img.style.opacity = 1;
+            }, 200);
+
+            // Reset del caché del libro para que al "Leer" traiga el nuevo
+            libroData = [];
+            paginaActual = 1;
+        }
 
         async function cargarConfig() {
             try {
@@ -390,8 +506,9 @@
                 abrirLector();
                 return;
             }
+            const endpoint = librosDisponibles[libroActivo].leer;
             try {
-                const res = await fetch('/api/libro');
+                const res = await fetch(endpoint);
                 if (res.ok) {
                     libroData = await res.json();
                     localStorage.setItem('libroOffline', JSON.stringify(libroData));
@@ -439,7 +556,7 @@
         }
 
         function descargarPDF() {
-            window.open('/api/descargar-pdf', '_blank');
+            window.open(librosDisponibles[libroActivo].pdf, '_blank');
         }
 
         function copiarAlias() {
