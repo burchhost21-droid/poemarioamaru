@@ -3,13 +3,12 @@ const PDFDocument = require('pdfkit');
 const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit'); // ← hay que instalar: npm i express-rate-limit
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 
 const app = express();
 app.set('trust proxy', 1);
 
-// Seguridad básica
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
@@ -17,52 +16,38 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: true, // o poner tu dominio específico
+  origin: true,
   methods: ['GET', 'POST'],
   maxAge: 86400
 }));
 
-// Límite de tamaño de body (evita payloads enormes)
 app.use(express.json({ limit: '50kb' }));
 app.use(express.urlencoded({ extended: false, limit: '50kb' }));
 
-// ========== RATE LIMITERS ==========
-
-// Rate limiter general (todas las rutas)
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 200,                 // 200 requests por IP cada 15 min
+  windowMs: 15 * 60 * 1000,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Demasiadas peticiones. Intentá de nuevo en unos minutos.' },
-  // Si querés ser más agresivo contra bots:
-  // skipSuccessfulRequests: false,
+  message: { error: 'Demasiadas peticiones. Intentá de nuevo en unos minutos.' }
 });
 
-// Rate limiter más estricto para generación de PDF (ruta pesada)
 const pdfLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutos
-  max: 8,                   // máximo 8 PDFs por IP cada 10 min
+  windowMs: 10 * 60 * 1000,
+  max: 8,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Estás generando demasiados PDFs. Esperá un poco.' }
 });
 
-// Aplicar el general a todo
 app.use(generalLimiter);
-
-// Servir archivos estáticos
 app.use(express.static(__dirname, { index: false }));
 
-// Ruta principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ========== CONTENIDO COMPLETO DEL LIBRO (TUS POEMAS) ==========
-// ← acá va tu array de poemas exactamente como lo tenías
-
-// ========== CONTENIDO COMPLETO DEL LIBRO (TUS POEMAS) ==========
+// ========== LIBRO 1 (hardcodeado, tal cual lo tenías) ==========
 const libroData = [
   {
     pagina: 1,
@@ -369,137 +354,168 @@ ahora solo me dedico a buscar más de Dios.`
   }
 ];
 
+// ========== LIBRO 2 (desde poemario2.txt) ==========
+
+// Parser: cada poema separado por una línea de 3+ guiones (---)
+// La primera línea no vacía del bloque es el título, el resto es el contenido.
+function parsearPoemario(texto) {
+  const bloques = texto
+    .split(/^\s*-{3,}\s*$/m)
+    .map(b => b.trim())
+    .filter(b => b.length > 0);
+
+  return bloques.map((bloque, i) => {
+    const lineas = bloque.split('\n');
+    let titulo = '';
+    let inicio = 0;
+    for (let j = 0; j < lineas.length; j++) {
+      if (lineas[j].trim() !== '') {
+        titulo = lineas[j].trim();
+        inicio = j + 1;
+        break;
+      }
+    }
+    const contenido = lineas.slice(inicio).join('\n').trim();
+    return { pagina: i + 1, titulo, contenido };
+  });
+}
+
+let libro2Data = [];
+const rutaPoemario2 = path.join(__dirname, 'poemario2.txt');
+
+if (fs.existsSync(rutaPoemario2)) {
+  try {
+    const texto = fs.readFileSync(rutaPoemario2, 'utf8');
+    libro2Data = parsearPoemario(texto);
+    console.log(`📖 Libro 2: ${libro2Data.length} poemas cargados desde poemario2.txt`);
+  } catch (e) {
+    console.error('❌ Error leyendo poemario2.txt:', e.message);
+  }
+} else {
+  console.warn('⚠️  No se encontró poemario2.txt en la raíz del proyecto');
+}
+
 // ========== RUTAS API ==========
+
+// Config
+app.get('/api/config', (req, res) => {
+  res.json({
+    alias: process.env.MP_ALIAS || 'amaru77mp',
+    donationLink: process.env.MP_DONATION_LINK || 'https://link.mercadopago.com.ar/amaru77'
+  });
+});
+
+// --- Libro 1 ---
 app.get('/api/libro', (req, res) => {
   res.json(libroData);
 });
 
-// ========== RUTA /api/config ==========
-app.get('/api/config', (req, res) => {
-  res.json({
-    alias: process.env.MP_ALIAS || 'amaru77mp',                     // ← Alias real
-    donationLink: process.env.MP_DONATION_LINK || 'https://link.mercadopago.com.ar/amaru77'  // ← Link sin monto fijo
+app.get('/api/descargar-pdf', pdfLimiter, (req, res) => {
+  generarPDF(res, {
+    poemas: libroData,
+    portada: 'portada.jpg',
+    titulo: 'Portal Simetría Antitética',
+    autor: 'Amaru Poemarios',
+    subtitulo: 'Poemario de amor y desamor',
+    nombreArchivo: 'Portal_Simetria_Antitetica_Amaru.pdf'
   });
 });
 
-// ========== RUTA PDF – CON PORTADA E IMAGEN ==========
-app.get('/api/descargar-pdf', (req, res) => {
+// --- Libro 2 ---
+app.get('/api/libro2', (req, res) => {
+  res.json(libro2Data);
+});
+
+app.get('/api/descargar-pdf2', pdfLimiter, (req, res) => {
+  generarPDF(res, {
+    poemas: libro2Data,
+    portada: 'portada2.jpg',
+    titulo: 'Segundo Poemario',
+    autor: 'Amaru Poemarios',
+    subtitulo: 'Poemario',
+    nombreArchivo: 'Segundo_Poemario_Amaru.pdf'
+  });
+});
+
+// ========== GENERADOR DE PDF (reutilizable) ==========
+function generarPDF(res, { poemas, portada, titulo, autor, subtitulo, nombreArchivo }) {
   try {
     const doc = new PDFDocument({
       margin: 60,
       size: 'A4',
-      info: {
-        Title: 'Portal Simetría Antitética',
-        Author: 'Amaru Poemarios'
-      }
+      info: { Title: titulo, Author: autor }
     });
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="Portal_Simetria_Antitetica_Amaru.pdf"');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
     doc.pipe(res);
 
-    // ─── PORTADA FULL-PAGE (para que WhatsApp muestre bien el thumbnail) ───
-    const rutaImagen = path.join(__dirname, 'portada.jpg');
-
+    // Portada full-page
+    const rutaImagen = path.join(__dirname, portada);
     if (fs.existsSync(rutaImagen)) {
-      // Imagen a toda la página
       doc.image(rutaImagen, 0, 0, {
         width: doc.page.width,
         height: doc.page.height
       });
     } else {
-      // Fallback si no existe la imagen
-      doc.font('Helvetica-Bold')
-         .fontSize(32)
-         .text('Portal Simetría Antitética', { align: 'center' });
+      doc.font('Helvetica-Bold').fontSize(32).text(titulo, { align: 'center' });
       doc.moveDown(2);
-      doc.fontSize(18).text('Amaru Poemarios', { align: 'center' });
+      doc.fontSize(18).text(autor, { align: 'center' });
     }
 
-    // Nueva página para el resto del contenido
     doc.addPage();
 
-    // Título y autor (página de presentación)
-    doc.font('Helvetica-Bold')
-       .fontSize(24)
-       .text('Portal Simetría Antitética', { align: 'center' });
+    // Página de presentación
+    doc.font('Helvetica-Bold').fontSize(24).text(titulo, { align: 'center' });
     doc.moveDown(0.5);
-
-    doc.font('Helvetica')
-       .fontSize(18)
-       .text('Amaru Poemarios', { align: 'center' });
+    doc.font('Helvetica').fontSize(18).text(autor, { align: 'center' });
     doc.moveDown(0.5);
-
-    doc.fontSize(14)
-       .text('Poemario de amor y desamor', { align: 'center' });
+    if (subtitulo) doc.fontSize(14).text(subtitulo, { align: 'center' });
     doc.moveDown(2);
-
-    doc.fontSize(12)
-       .text('© 2025 – Todos los derechos reservados', { align: 'center' });
+    doc.fontSize(12).text('© 2025 – Todos los derechos reservados', { align: 'center' });
     doc.moveDown(3);
 
-    // Línea decorativa
-    doc.moveTo(100, doc.y)
-       .lineTo(doc.page.width - 100, doc.y)
-       .stroke('#b8860b');
+    doc.moveTo(100, doc.y).lineTo(doc.page.width - 100, doc.y).stroke('#b8860b');
     doc.moveDown(2);
 
-    doc.fontSize(11)
-       .text('"Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños."', {
-         align: 'center',
-         italic: true
-       });
+    doc.fontSize(11).text('"Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños."', { align: 'center', italic: true });
     doc.moveDown(1);
     doc.text('Entre tantos mensajes en símbolos no hay puntada sin hilo.', { align: 'center' });
     doc.text('Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.', { align: 'center' });
 
-    // ─── POEMAS (cada uno en página nueva) ────────────────
-    libroData.forEach((pag, index) => {
+    // Poemas
+    poemas.forEach((pag, index) => {
       if (index > 0) doc.addPage();
 
       if (pag.titulo) {
-        doc.font('Helvetica-Bold')
-           .fontSize(20)
-           .text(pag.titulo, { align: 'center' });
+        doc.font('Helvetica-Bold').fontSize(20).text(pag.titulo, { align: 'center' });
         doc.moveDown(0.5);
-        doc.moveTo(120, doc.y)
-           .lineTo(doc.page.width - 120, doc.y)
-           .stroke('#b8860b');
+        doc.moveTo(120, doc.y).lineTo(doc.page.width - 120, doc.y).stroke('#b8860b');
         doc.moveDown(1);
       }
 
-      doc.font('Helvetica')
-         .fontSize(12)
-         .text(pag.contenido, {
-           align: 'justify',
-           lineGap: 8,
-           indent: 30,
-           continued: false
-         });
+      doc.font('Helvetica').fontSize(12).text(pag.contenido, {
+        align: 'justify',
+        lineGap: 8,
+        indent: 30,
+        continued: false
+      });
 
-      // Número de página
-      const pageNumber = doc.page.number;
-      doc.fontSize(10)
-         .text(`Página ${pageNumber}`, {
-           align: 'center',
-           lineGap: 0
-         });
+      doc.fontSize(10).text(`Página ${doc.page.number}`, { align: 'center', lineGap: 0 });
     });
 
     doc.end();
-
   } catch (e) {
     console.error('Error al generar PDF:', e);
     res.status(500).send('Error al generar el PDF');
   }
-});
+}
 
-// Cualquier otra ruta: SPA (sirve index.html)
+// SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ========== ARRANQUE ==========
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
