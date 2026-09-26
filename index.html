@@ -10,6 +10,9 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <title>Amaru Poemarios</title>
     <style>
+        /* ============================================================
+           ESTILOS GENERALES
+           ============================================================ */
         body {
             margin: 0;
             background: #050505;
@@ -35,19 +38,16 @@
             border: 1px solid #1a1a1a;
         }
 
-        /* ============================================
-           WRAPPER DE LA PORTADA + FLECHITAS
-           Las flechitas son hermanas de la portada
-           dentro de este flex, así nunca la tapan.
-           ============================================ */
+        /* ============================================================
+           PORTADA + FLECHITAS (flex horizontal, nunca se superponen)
+           ============================================================ */
         .portada-wrapper {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 14px; /* separación entre flechita y portada */
             flex: 0 0 auto;
         }
-
         .portada-frame {
             flex: 0 0 350px;
             max-width: 350px;
@@ -68,11 +68,9 @@
             transition: opacity 0.3s ease;
         }
 
-        /* ============================================
-           FLECHITAS < >
-           Sin position absolute: son ítems flex del
-           .portada-wrapper, quedan afuera de la portada.
-           ============================================ */
+        /* ============================================================
+           FLECHITAS < >  (solo caracteres, titilan lento)
+           ============================================================ */
         .flecha {
             background: transparent;
             border: 0;
@@ -81,7 +79,7 @@
             font-size: 4.5rem;
             line-height: 1;
             font-weight: 300;
-            padding: 6px 10px;
+            padding: 6px 8px;
             cursor: pointer;
             user-select: none;
             text-shadow: 0 0 18px rgba(212, 175, 55, 0.35);
@@ -109,17 +107,34 @@
         }
         .flecha.next { animation-delay: 2s; }
 
+        /* ============================================================
+           COLUMNA DERECHA: SINOPSIS + BOTONES
+           ============================================================ */
         .col-derecha {
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
+
+        /* Título del libro activo (arriba de la sinopsis) */
+        .titulo-libro {
+            font-size: 1.6rem;
+            color: #d4af37;
+            margin: 0;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 10px;
+        }
+
+        /* Sinopsis: cambia según el libro activo */
         .resena-text {
             font-style: italic;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             line-height: 1.7;
+            min-height: 180px;
         }
+
         .acciones-container {
             display: flex;
             flex-direction: column;
@@ -140,24 +155,18 @@
             background: #b8860b;
             color: white;
         }
-        .accion-btn.leer:hover {
-            background: #9e740a;
-        }
+        .accion-btn.leer:hover { background: #9e740a; }
         .accion-btn.descargar {
             background: #2a2a2a;
             color: #d4af37;
             border: 1px solid #d4af37;
         }
-        .accion-btn.descargar:hover {
-            background: #3a3a3a;
-        }
+        .accion-btn.descargar:hover { background: #3a3a3a; }
         .accion-btn.donar {
             background: #009ee3;
             color: white;
         }
-        .accion-btn.donar:hover {
-            background: #0082c7;
-        }
+        .accion-btn.donar:hover { background: #0082c7; }
         .alias-copy {
             margin-top: 5px;
             font-size: 0.9rem;
@@ -168,13 +177,15 @@
             border: none;
             font-family: Georgia, serif;
         }
+
+        /* ============================================================
+           LECTOR (modal a pantalla completa)
+           ============================================================ */
         #lectorPrincipal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0,0,0,0.98);
             z-index: 20000;
             justify-content: center;
@@ -203,9 +214,7 @@
             word-wrap: break-word;
             transition: background 0.3s, color 0.3s;
         }
-        #hoja-libro::-webkit-scrollbar {
-            width: 8px;
-        }
+        #hoja-libro::-webkit-scrollbar { width: 8px; }
         #hoja-libro::-webkit-scrollbar-track {
             background: #e9e4d9;
             border-radius: 10px;
@@ -217,8 +226,7 @@
         }
         .scroll-indicator {
             position: absolute;
-            bottom: 70px;
-            left: 50%;
+            bottom: 70px; left: 50%;
             transform: translateX(-50%);
             font-size: 2.5rem;
             color: #d4af37;
@@ -255,9 +263,7 @@
             border-radius: 4px;
             transition: background 0.2s;
         }
-        .barra-navegacion button:hover {
-            background: #333;
-        }
+        .barra-navegacion button:hover { background: #333; }
         .barra-navegacion span {
             font-family: serif;
             font-weight: bold;
@@ -271,9 +277,7 @@
             font-size: 1.2rem;
             padding: 6px 12px;
         }
-        .barra-navegacion .modo-btn:hover {
-            background: #ccc;
-        }
+        .barra-navegacion .modo-btn:hover { background: #ccc; }
         .lector-contenedor.modo-oscuro {
             background: #0d0d0d;
             border-color: #d4af37;
@@ -290,37 +294,29 @@
             background: #1a1a1a;
             border-top-color: #d4af37;
         }
-        .lector-contenedor.modo-oscuro .barra-navegacion span {
-            color: #b0d4ff;
-        }
+        .lector-contenedor.modo-oscuro .barra-navegacion span { color: #b0d4ff; }
         .lector-contenedor.modo-oscuro .barra-navegacion button {
             background: #2a2a2a;
             color: #d4af37;
             border-color: #d4af37;
         }
-        .lector-contenedor.modo-oscuro .barra-navegacion button:hover {
-            background: #444;
-        }
+        .lector-contenedor.modo-oscuro .barra-navegacion button:hover { background: #444; }
         .lector-contenedor.modo-oscuro .barra-navegacion .modo-btn {
             color: #d4af37;
             border-color: #d4af37;
             background: transparent;
         }
-        .lector-contenedor.modo-oscuro .barra-navegacion .modo-btn:hover {
-            background: #2a2a2a;
-        }
-        .lector-contenedor.modo-oscuro .scroll-indicator {
-            color: #d4af37;
-        }
-        .lector-contenedor.modo-oscuro #hoja-libro::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
+        .lector-contenedor.modo-oscuro .barra-navegacion .modo-btn:hover { background: #2a2a2a; }
+        .lector-contenedor.modo-oscuro .scroll-indicator { color: #d4af37; }
+        .lector-contenedor.modo-oscuro #hoja-libro::-webkit-scrollbar-track { background: #1a1a1a; }
         .lector-contenedor.modo-oscuro #hoja-libro::-webkit-scrollbar-thumb {
             background: #d4af37;
             border-color: #1a1a1a;
         }
 
-        /* ===== RESPONSIVE ===== */
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
         @media (max-width: 900px) {
             .portada-wrapper { gap: 6px; }
             .flecha { font-size: 3.5rem; padding: 4px 6px; }
@@ -345,9 +341,8 @@
                 align-items: center;
                 text-align: center;
             }
-            .accion-btn {
-                width: 240px;
-            }
+            .accion-btn { width: 240px; }
+            .titulo-libro { font-size: 1.3rem; text-align: center; }
             #hoja-libro {
                 padding: 40px 8px 30px 12px;
                 font-size: 0.95rem;
@@ -358,10 +353,7 @@
                 height: auto;
                 padding: 8px 0;
             }
-            .barra-navegacion button {
-                padding: 6px 12px;
-                font-size: 0.9rem;
-            }
+            .barra-navegacion button { padding: 6px 12px; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -369,7 +361,11 @@
     <div class="main-wrapper">
         <div class="hero-row">
 
-            <!-- Portada + flechitas como hermanas flex -->
+            <!-- ============================================================
+                 PORTADA CON FLECHITAS
+                 Las flechitas son hermanas de la portada dentro de un flex,
+                 así nunca la tapan. Al apretar cambian de libro.
+                 ============================================================ -->
             <div class="portada-wrapper">
                 <button class="flecha prev" onclick="cambiarLibro(-1)" aria-label="Libro anterior">&lt;</button>
                 <div class="portada-frame">
@@ -378,14 +374,21 @@
                 <button class="flecha next" onclick="cambiarLibro(1)" aria-label="Libro siguiente">&gt;</button>
             </div>
 
+            <!-- ============================================================
+                 COLUMNA DERECHA: título + sinopsis + botones
+                 El título y la sinopsis cambian según el libro activo.
+                 ============================================================ -->
             <div class="col-derecha">
+                <h1 class="titulo-libro" id="titulo-libro">Portal Simetría Antitética</h1>
                 <div class="resena-text" id="resena-text">
-                    Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños.<br><br>
-                    Entre tantos mensajes en símbolos no hay puntada sin hilo. Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.
+                    <!-- La sinopsis del libro activo se inyecta acá por JS -->
                 </div>
                 <div class="acciones-container">
+                    <!-- Leer: abre el lector con los poemas del libro activo -->
                     <button class="accion-btn leer" onclick="iniciarLectura()">📖 Leer Ahora</button>
+                    <!-- Descargar: genera el PDF del libro activo desde el server -->
                     <button class="accion-btn descargar" onclick="descargarPDF()">📥 Descargar PDF</button>
+                    <!-- Donación -->
                     <button class="accion-btn donar" onclick="donarMP()">💛 Donar con Mercado Pago</button>
                     <button class="alias-copy" onclick="copiarAlias()">Copiar alias: <span id="alias-mp">Cargando...</span></button>
                 </div>
@@ -393,6 +396,9 @@
         </div>
     </div>
 
+    <!-- ============================================================
+         LECTOR MODAL
+         ============================================================ -->
     <div id="lectorPrincipal">
         <button onclick="cerrarLector()" style="position:fixed; right:20px; top:20px; width:45px; height:45px; border-radius:50%; background:#d4af37; border:none; font-size:30px; cursor:pointer; color:black; font-weight:bold; z-index:20001; display:flex; align-items:center; justify-content:center;">&times;</button>
         <div class="lector-contenedor" id="lectorContenedor">
@@ -408,63 +414,88 @@
     </div>
 
     <script>
-        let libroData = [];
-        let paginaActual = 1;
-        let aliasMP = 'amaru77mp';
+        /* ============================================================
+           ESTADO GLOBAL
+           ============================================================ */
+        let libroData = [];         // Poemas del libro activo (se carga al leer)
+        let paginaActual = 1;       // Página actual dentro del lector
+        let aliasMP = 'amaru77mp';  // Alias de Mercado Pago (se sobrescribe con /api/config)
         let donationLink = 'https://mpago.la/ejemplo';
+        let libroActivo = 0;        // Índice del libro mostrado en el carrusel
 
-        // ===== Libros del carrusel =====
+        /* ============================================================
+           CONFIGURACIÓN DE LIBROS
+           Cada libro tiene:
+             - portada: ruta de la imagen
+             - titulo:  título mostrado arriba de la sinopsis
+             - resena:  sinopsis (acepta HTML, ej: <br><br>)
+             - leer:    endpoint que devuelve los poemas en JSON
+             - pdf:     endpoint que genera y devuelve el PDF
+           Para agregar un tercer libro, copiá un objeto y completá.
+           ============================================================ */
         const librosDisponibles = [
             {
                 portada: '/portada.jpg',
+                titulo: 'Portal Simetría Antitética',
                 resena: 'Cuando los opuestos combaten, surgen escenas paradójicas y oníricas que escapan de los sueños.<br><br>Entre tantos mensajes en símbolos no hay puntada sin hilo. Para interpretar no necesitás manuales esotéricos: solo necesitás el resto del contexto.',
                 leer: '/api/libro',
                 pdf: '/api/descargar-pdf'
             },
             {
                 portada: '/portada2.jpg',
-                resena: 'Próximamente: el segundo poemario. Otros símbolos, otras runas, otras geometrías del alma.',
-                leer: '/api/libro',
-                pdf: '/api/descargar-pdf'
+                titulo: 'Segundo Poemario',
+                resena: 'Un segundo recorrido por los símbolos, las runas y las geometrías del alma.<br><br>Acá va la sinopsis del libro 2. Reemplazá este texto por el que quieras mostrar cuando el carrusel esté en la segunda portada.',
+                leer: '/api/libro2',
+                pdf: '/api/descargar-pdf2'
             }
         ];
 
-        let libroActivo = 0;
-
+        /* ============================================================
+           CARRUSEL: cambiar de libro
+           Rota el índice, actualiza portada, título y sinopsis.
+           Resetea el estado del lector para que al abrir traiga
+           los poemas del libro correcto.
+           ============================================================ */
         function cambiarLibro(dir) {
+            // Módulo: al pasar del último vuelve al primero y viceversa
             libroActivo = (libroActivo + dir + librosDisponibles.length) % librosDisponibles.length;
             const libro = librosDisponibles[libroActivo];
 
+            // Fade out de la portada
             const img = document.getElementById('img-portada');
             img.style.opacity = 0;
 
             setTimeout(() => {
                 img.src = libro.portada;
-                img.alt = 'Portada del libro';
+                img.alt = 'Portada de ' + libro.titulo;
+                document.getElementById('titulo-libro').textContent = libro.titulo;
                 document.getElementById('resena-text').innerHTML = libro.resena;
                 img.style.opacity = 1;
             }, 200);
 
+            // Reset del lector: poemas y página
             libroData = [];
             paginaActual = 1;
         }
 
+        /* ============================================================
+           CONFIGURACIÓN REMOTA (alias MP, link de donación)
+           ============================================================ */
         async function cargarConfig() {
             try {
                 const res = await fetch('/api/config');
                 if (res.ok) {
                     const cfg = await res.json();
-                    aliasMP = cfg.alias || 'amaru77mp';
-                    donationLink = cfg.donationLink || 'https://mpago.la/ejemplo';
-                    document.getElementById('alias-mp').innerText = aliasMP;
-                } else {
-                    document.getElementById('alias-mp').innerText = aliasMP;
+                    aliasMP = cfg.alias || aliasMP;
+                    donationLink = cfg.donationLink || donationLink;
                 }
-            } catch (e) {
-                document.getElementById('alias-mp').innerText = aliasMP;
-            }
+            } catch (e) { /* silencioso */ }
+            document.getElementById('alias-mp').innerText = aliasMP;
         }
 
+        /* ============================================================
+           MODO OSCURO DEL LECTOR
+           ============================================================ */
         function toggleModoOscuro() {
             const contenedor = document.getElementById('lectorContenedor');
             contenedor.classList.toggle('modo-oscuro');
@@ -474,47 +505,53 @@
             if (btn) btn.textContent = isDark ? '☀️' : '🌙';
             actualizarIndicadorScroll();
         }
-
         function aplicarModoGuardado() {
-            const guardado = localStorage.getItem('modoOscuro');
-            if (guardado === 'true') {
-                const contenedor = document.getElementById('lectorContenedor');
-                contenedor.classList.add('modo-oscuro');
+            if (localStorage.getItem('modoOscuro') === 'true') {
+                document.getElementById('lectorContenedor').classList.add('modo-oscuro');
                 const btn = document.querySelector('.modo-btn');
                 if (btn) btn.textContent = '☀️';
             }
         }
 
+        /* ============================================================
+           INDICADOR DE SCROLL
+           ============================================================ */
         function actualizarIndicadorScroll() {
             const hoja = document.getElementById('hoja-libro');
             const indicador = document.getElementById('scroll-indicator');
             if (!hoja || !indicador) return;
             const hayOverflow = hoja.scrollHeight > hoja.clientHeight + 5;
             const estaAlFinal = hoja.scrollTop + hoja.clientHeight >= hoja.scrollHeight - 20;
-            if (hayOverflow && !estaAlFinal) {
-                indicador.style.display = 'block';
-            } else {
-                indicador.style.display = 'none';
-            }
+            indicador.style.display = (hayOverflow && !estaAlFinal) ? 'block' : 'none';
         }
 
+        /* ============================================================
+           LECTURA
+           Carga los poemas del LIBRO ACTIVO desde su endpoint.
+           Usa caché por libro: 'libroOffline_0' y 'libroOffline_1'.
+           ============================================================ */
         async function iniciarLectura() {
+            // Si ya tenemos poemas de este libro en memoria, abrimos directo
             if (libroData.length > 0) {
                 abrirLector();
                 return;
             }
+
+            const cacheKey = 'libroOffline_' + libroActivo;
             const endpoint = librosDisponibles[libroActivo].leer;
+
             try {
                 const res = await fetch(endpoint);
                 if (res.ok) {
                     libroData = await res.json();
-                    localStorage.setItem('libroOffline', JSON.stringify(libroData));
+                    localStorage.setItem(cacheKey, JSON.stringify(libroData));
                     abrirLector();
                 } else {
                     alert("No se pudo cargar el libro. Intentá de nuevo.");
                 }
             } catch (e) {
-                const cache = localStorage.getItem('libroOffline');
+                // Fallback offline: solo el caché de ESTE libro
+                const cache = localStorage.getItem(cacheKey);
                 if (cache) {
                     libroData = JSON.parse(cache);
                     abrirLector();
@@ -534,8 +571,11 @@
         function cargarPagina(num) {
             const p = libroData.find(i => i.pagina == num);
             if (p) {
-                const headerPoema = p.titulo ? `<h1 style="color:#b8860b; font-family:Georgia; border-bottom:1px solid #d4af37; padding-bottom:15px; margin-bottom:25px; font-size:1.8rem;">${p.titulo}</h1>` : '';
-                document.getElementById('hoja-libro').innerHTML = headerPoema + `<div style="white-space: pre-wrap;">${p.contenido}</div>`;
+                const headerPoema = p.titulo
+                    ? `<h1 style="color:#b8860b; font-family:Georgia; border-bottom:1px solid #d4af37; padding-bottom:15px; margin-bottom:25px; font-size:1.8rem;">${p.titulo}</h1>`
+                    : '';
+                document.getElementById('hoja-libro').innerHTML =
+                    headerPoema + `<div style="white-space: pre-wrap;">${p.contenido}</div>`;
                 document.getElementById('num-pagina').innerText = num;
                 paginaActual = num;
                 document.getElementById('hoja-libro').scrollTop = 0;
@@ -548,14 +588,22 @@
         }
 
         function cambiarPagina(d) {
-            let n = paginaActual + d;
+            const n = paginaActual + d;
             if (n >= 1 && n <= libroData.length) cargarPagina(n);
         }
 
+        /* ============================================================
+           DESCARGA DE PDF
+           Abre el endpoint del LIBRO ACTIVO. El server genera el PDF
+           con la portada y los poemas correspondientes.
+           ============================================================ */
         function descargarPDF() {
             window.open(librosDisponibles[libroActivo].pdf, '_blank');
         }
 
+        /* ============================================================
+           ALIAS Y DONACIÓN
+           ============================================================ */
         function copiarAlias() {
             navigator.clipboard.writeText(aliasMP).then(() => {
                 alert("Alias copiado: " + aliasMP);
@@ -563,19 +611,32 @@
                 prompt("Copiá manualmente el alias:", aliasMP);
             });
         }
-
         function donarMP() {
             window.open(donationLink, '_blank');
         }
 
+        /* ============================================================
+           INICIALIZACIÓN
+           NO precargamos ningún libro: solo aplicamos el estado inicial
+           del carrusel (libro 0) al DOM.
+           ============================================================ */
         document.addEventListener('DOMContentLoaded', () => {
             cargarConfig();
+
+            // Estado inicial del carrusel
+            const libro = librosDisponibles[libroActivo];
+            document.getElementById('img-portada').src = libro.portada;
+            document.getElementById('titulo-libro').textContent = libro.titulo;
+            document.getElementById('resena-text').innerHTML = libro.resena;
+
+            // Scroll del lector
             const hoja = document.getElementById('hoja-libro');
-            if (hoja) {
-                hoja.addEventListener('scroll', actualizarIndicadorScroll);
-            }
+            if (hoja) hoja.addEventListener('scroll', actualizarIndicadorScroll);
         });
 
+        /* ============================================================
+           ATAJOS DE TECLADO DENTRO DEL LECTOR
+           ============================================================ */
         document.addEventListener('keydown', function(e) {
             if (document.getElementById('lectorPrincipal').style.display === 'flex') {
                 if (e.key === 'ArrowRight') cambiarPagina(1);
@@ -591,18 +652,9 @@
             }
         });
 
-        window.onload = () => {
-            fetch('/api/libro')
-                .then(r => r.ok ? r.json() : null)
-                .then(data => {
-                    if (data) {
-                        libroData = data;
-                        localStorage.setItem('libroOffline', JSON.stringify(data));
-                    }
-                })
-                .catch(() => {});
-        };
-
+        /* ============================================================
+           SERVICE WORKER (PWA / offline)
+           ============================================================ */
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js');
