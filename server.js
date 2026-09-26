@@ -433,7 +433,8 @@ app.get('/api/descargar-pdf2', pdfLimiter, (req, res) => {
     titulo: 'Segundo Poemario',
     autor: 'Amaru Poemarios',
     subtitulo: 'Poemario',
-    nombreArchivo: 'Segundo_Poemario_Amaru.pdf'
+    nombreArchivo: 'Segundo_Poemario_Amaru.pdf',
+    sinopsis: 'Acá poné la sinopsis real del libro 2.'
   });
 });
 
