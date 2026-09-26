@@ -439,7 +439,7 @@ app.get('/api/descargar-pdf2', pdfLimiter, (req, res) => {
 });
 
 // ========== GENERADOR DE PDF (reutilizable) ==========
-function generarPDF(res, { poemas, portada, titulo, autor, subtitulo, nombreArchivo }) {
+function generarPDF(res, { poemas, portada, titulo, autor, subtitulo, nombreArchivo, sinopsis }) {
   try {
     const doc = new PDFDocument({
       margin: 60,
